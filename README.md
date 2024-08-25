@@ -1,3 +1,3 @@
 # gw-tbpsim
 
-No description, website, or topics provided. WIP project.
+WIP project, a rewrite of MSc project.
