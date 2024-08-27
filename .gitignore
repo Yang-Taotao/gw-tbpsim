@@ -1,5 +1,7 @@
 #JAX
+*.jaxcache
 *jaxcache
+__jaxcache__
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
