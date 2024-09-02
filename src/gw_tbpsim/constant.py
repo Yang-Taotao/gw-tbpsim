@@ -16,7 +16,7 @@ Primary collection of constant values, static and calculated ones.
 # Imports
 import jax.numpy as jnp
 import bilby
-from .config import F_BASE, M_BASE, PARAM_BASE
+from .config import F_BASE, M_BASE, PARAM_BASE, THETA_BASE
 
 # Func
 
@@ -52,3 +52,4 @@ F_PSD = freq_psd(*F_BASE)
 M1_ARRAY = jnp.linspace(*M_BASE)
 M2_ARRAY = jnp.linspace(*M_BASE)
 PARAM_ARRAY = jnp.array(PARAM_BASE)
+THETA_ARRAY = jnp.array(THETA_BASE)
