@@ -29,19 +29,15 @@ def inner_prod(vec_a: jnp.ndarray, vec_b: jnp.ndarray) -> float:
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
 
-def waveform(param: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+def waveform(theta: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Waveform generation with ripple
 
     Args:
-        param (jnp.ndarray): GW source param - m1, m2, chi1, chi2, dist_mpc, tc, phic, inclination
+        theta (jnp.ndarray): GW param - mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
 
     Returns:
         tuple[jnp.ndarray, jnp.ndarray]: Tuple of GW strain hp, hc.
     """
-    # Get mc, eta
-    mc_eta = jnp.array(ripple.ms_to_Mc_eta(param[:2]))
-    # Build param_theta - mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-    theta = jnp.append(mc_eta, param[2:])
     # Get hp, hc
     hp, hc = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(
         F_SIG, theta, F_REF)
@@ -50,22 +46,19 @@ def waveform(param: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
 
 
 @jax.jit
-def waveform_normed(param: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+def waveform_norm(theta: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Waveform generation with ripple
 
     Args:
-        param (jnp.ndarray): GW source param - m1, m2, chi1, chi2, dist_mpc, tc, phic, inclination
+        theta (jnp.ndarray): GW param - mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
 
     Returns:
         tuple[jnp.ndarray, jnp.ndarray]: Tuple of normalized GW strain hp, hc.
     """
     # Get waveform
-    hp, hc = waveform(param)
-    # Calculate normalization factor
-    norm_factor_hp = jnp.sqrt(inner_prod(hp, hp))
-    norm_factor_hc = jnp.sqrt(inner_prod(hc, hc))
-    # Normalized waveform
-    hp_norm = hp / norm_factor_hp
-    hc_norm = hc / norm_factor_hc
+    hp, hc = waveform(theta)
+    # Normalized waveform - waveform/norm factor
+    hp_norm = hp / jnp.sqrt(inner_prod(hp, hp))
+    hc_norm = hc / jnp.sqrt(inner_prod(hc, hc))
     # Return
     return hp_norm, hc_norm
