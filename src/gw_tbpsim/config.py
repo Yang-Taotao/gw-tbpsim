@@ -42,4 +42,6 @@ F_BASE = 24.0, 512.0, 0.5
 M_BASE = 1.0, 21.0, 100
 # Param base - m1, m2, chi1, chi2, dist_mpc, tc, phic, inclination
 PARAM_BASE = [36.0, 29.0, 0.0, 0.0, 40.0, 0.0, 0.0, 0.0]
+# Theta base - mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
+THETA_BASE = [28.0956, 0.2471, 0.0, 0.0, 40.0, 0.0, 0.0, 0.0]
 # =========================================================================== #
