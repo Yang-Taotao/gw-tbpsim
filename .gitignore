@@ -1,7 +1,10 @@
-#JAX
+# JAX
 *.jaxcache
 *jaxcache
 __jaxcache__
+
+# Notes
+*.notes
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
