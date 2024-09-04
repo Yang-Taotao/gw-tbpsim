@@ -5,9 +5,12 @@ Config file
 Configurations for:
     - F_BASE: Frequency settings for signal and reference.
     - M_BASE: Component mass settings for mass entries, same for m1, m2.
-    - PARAM_BASE: Initial param [m1, m2, chi1, chi2, dist_mpc, tc, phic, inclination].
-    - THETA_BASE: Initial param [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+    - PARAM_BASE: Initial param 
+        - [m1, m2, chi1, chi2, dist_mpc, tc, phic, inclination].
+    - THETA_BASE: Initial param
+        - [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 """
+
 # Initial CONST config
 # =========================================================================== #
 # Freq - min, max, step size
