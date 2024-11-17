@@ -86,7 +86,7 @@ def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     return wf_norm.imag[0]
 
 
-def hc_real(theta, f_sig):
+def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
     Normalized hc waveform, real part.
 
@@ -106,7 +106,7 @@ def hc_real(theta, f_sig):
     return wf_norm.real[0]
 
 
-def hc_imag(theta, f_sig):
+def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
     Normalized hc waveform, imaginary part.
 
