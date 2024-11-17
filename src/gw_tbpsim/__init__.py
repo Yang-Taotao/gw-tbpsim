@@ -42,79 +42,97 @@ def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
 
-# Waveform Gen
+# Waveform Func
 # =========================================================================== #
 
 
-def waveform(theta: jax.Array, sig: jax.Array) -> tuple[jax.Array, jax.Array]:
+def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hp, hc. GW waveform generation with ripple
+    Normalized hp waveform, real part.
 
     Args:
         theta (jax.Array): GW param
             mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        sig (jax.Array): Signal frequencies array
+        f_sig (jax.Array): Signal frequencies array
 
     Returns:
-        tuple[jax.Array, jax.Array]: Tuple of normalized GW strain hp, hc
+        jax.Array: The real part of normalized hp waveform
     """
-    # Get ripple waveform
-    hp, hc = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(sig, theta, F_REF)
-    # Normalize ripple waveform - waveform / norm factor
-    hp_norm = hp / jnp.sqrt(inner_prod(hp, hp))
-    hc_norm = hc / jnp.sqrt(inner_prod(hc, hc))
-    # Return
-    return hp_norm, hc_norm
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.real[0]
 
 
-def waveform_hp(theta: jax.Array, sig: jax.Array) -> jax.Array:
+def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hp. GW waveform generation with ripple
+    Normalized hp waveform, imaginary part.
 
     Args:
         theta (jax.Array): GW param
             mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        sig (jax.Array): Signal frequencies array
+        f_sig (jax.Array): Signal frequencies array
 
     Returns:
-        jax.Array: Normalized GW strain hp
+        jax.Array: The imaginary part of normalized hp waveform
     """
-    # Set to correct ripple theta dtype
-    theta = jnp.float32(theta)
-    # Get plus polarized GW strain
-    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(sig, theta, F_REF)
-    # Return normalized waveform - wf / normaliztion factor
-    return wf / jnp.sqrt(inner_prod(wf, wf))
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.imag[0]
 
 
-def waveform_hc(theta: jax.Array, sig: jax.Array) -> jax.Array:
+def hc_real(theta, f_sig):
     """
-    Normalized hc. GW waveform generation with ripple
+    Normalized hc waveform, real part.
 
     Args:
-        theta (jnp.ndarray): GW param
+        theta (jax.Array): GW param
             mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        sig (jnp.ndarray): Signal frequencies array
+        f_sig (jax.Array): Signal frequencies array
 
     Returns:
-        hc_norm (jnp.ndarray): Normalized GW strain hc
+        jax.Array: The real part of normalized hc waveform
     """
-    # Set to correct ripple theta dtype
-    theta = jnp.float32(theta)
-    # Get plus polarized GW strain
-    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(sig, theta, F_REF)
-    # Return normalized waveform - wf / normaliztion factor
-    return wf / jnp.sqrt(inner_prod(wf, wf))
+    # Get hc waveform with Ripple
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.real[0]
 
 
-# Grad calc
+def hc_imag(theta, f_sig):
+    """
+    Normalized hc waveform, imaginary part.
+
+    Args:
+        theta (jax.Array): GW param
+            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
+        f_sig (jax.Array): Signal frequencies array
+
+    Returns:
+        jax.Array: The imaginary part of normalized hc waveform
+    """
+    # Get hc waveform with Ripple
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.imag[0]
+
+
+# Gradiant Func
 # =========================================================================== #
 
 
 def grad_hp(theta: jax.Array) -> jax.Array:
     """
-    Gradients of hp against GW waveform.
-    Mapped to signal frequencies for plus polarizations
+    Gradients of normalized hp against hp parameters.
 
     Args:
         theta (jax.Array): GW param
@@ -124,19 +142,16 @@ def grad_hp(theta: jax.Array) -> jax.Array:
         jax.Array: Mapped gradients
             d(hp) / d(thetas)
     """
-    # Set to correct gradient theta dtype -> d(hp)/d(thetas)
-    thetas = jnp.complex128(theta)
-    # Return gradients mapped to signal frequencies
-    return jax.vmap(
-        jax.grad(waveform_hp, holomorphic=True),
-        in_axes=(None, 0),
-    )(thetas, F_SIG)
+    # Map gradiant result
+    grad_hp_real = jax.vmap(jax.grad(hp_real), in_axes=(None, 0))(theta, F_SIG)
+    grad_hp_imag = jax.vmap(jax.grad(hp_imag), in_axes=(None, 0))(theta, F_SIG)
+    # Func return
+    return grad_hp_real + grad_hp_imag * 1j
 
 
 def grad_hc(theta: jax.Array) -> jax.Array:
     """
-    Gradients of hc against GW waveform.
-    Mapped to signal frequencies for cross polarizations
+    Gradients of normalized hp against hp parameters.
 
     Args:
         theta (jax.Array): GW param
@@ -144,12 +159,11 @@ def grad_hc(theta: jax.Array) -> jax.Array:
 
     Returns:
         jax.Array: Mapped gradients
-            d(hc) / d(thetas)
+            d(hp) / d(thetas)
     """
-    # Set to correct gradient theta dtype -> d(hc)/d(thetas)
-    thetas = jnp.complex128(theta)
-    # Return gradients mapped to signal frequencies
-    return jax.vmap(
-        jax.grad(waveform_hc, holomorphic=True),
-        in_axes=(None, 0),
-    )(thetas, F_SIG)
+
+    # Map gradiant result
+    grad_hc_real = jax.vmap(jax.grad(hc_real), in_axes=(None, 0))(theta, F_SIG)
+    grad_hc_imag = jax.vmap(jax.grad(hc_imag), in_axes=(None, 0))(theta, F_SIG)
+    # Func return
+    return grad_hc_real + grad_hc_imag * 1j
