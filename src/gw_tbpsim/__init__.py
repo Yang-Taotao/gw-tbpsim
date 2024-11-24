@@ -25,23 +25,6 @@ jax.config.update("jax_compilation_cache_dir", ".jaxcache")
 # =========================================================================== #
 
 
-def inner_prod_old(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
-    """
-    Noise weighted inner product between some vectors a and b.
-
-    Args:
-        vec_a (jax.Array): Vector a.
-        vec_b (jax.Array): Vector b.
-
-    Returns:
-        jax.Array: One side noise weighted inner product.
-    """
-    # Get integrand - jnp.abs(vec_a.conj() * vec_b) / F_PSD
-    integrand = jnp.abs(vec_a.conj() * vec_b) / F_PSD
-    # Return one side noise weighted inner products
-    return 4 * F_DIFF * integrand.sum(axis=-1)
-
-
 def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
     """
     Noise weighted inner product between some vectors a and b.
