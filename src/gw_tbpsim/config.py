@@ -15,7 +15,7 @@ Configurations for:
 # Initial CONST config
 # =========================================================================== #
 # Freq - min, max, step size
-F_BASE = 20.0, 520.0, 0.5
+F_BASE = 24.0, 512.0, 0.5
 # Mass - Chirp mass - min, max, step size
 MC_BASE = 1.0, 21.0, 100
 # MASS - Symmetric mass ratio - min, max, step size
