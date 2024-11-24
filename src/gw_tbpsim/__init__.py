@@ -145,8 +145,8 @@ def grad_hp(theta: jax.Array) -> jax.Array:
     # Map gradiant result
     grad_hp_real = jax.vmap(jax.grad(hp_real), in_axes=(None, 0))(theta, F_SIG)
     grad_hp_imag = jax.vmap(jax.grad(hp_imag), in_axes=(None, 0))(theta, F_SIG)
-    # Func return
-    return grad_hp_real + grad_hp_imag * 1j
+    # Func return - complex128 dtype necessary
+    return jnp.complex128(grad_hp_real + grad_hp_imag * 1j)
 
 
 def grad_hc(theta: jax.Array) -> jax.Array:
@@ -165,8 +165,8 @@ def grad_hc(theta: jax.Array) -> jax.Array:
     # Map gradiant result
     grad_hc_real = jax.vmap(jax.grad(hc_real), in_axes=(None, 0))(theta, F_SIG)
     grad_hc_imag = jax.vmap(jax.grad(hc_imag), in_axes=(None, 0))(theta, F_SIG)
-    # Func return
-    return grad_hc_real + grad_hc_imag * 1j
+    # Func return - complex128 dtype necessary
+    return jnp.complex128(grad_hc_real + grad_hc_imag * 1j)
 
 
 # WIP
