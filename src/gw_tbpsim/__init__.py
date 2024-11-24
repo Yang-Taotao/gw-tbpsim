@@ -184,3 +184,168 @@ def grad_hc(theta: jax.Array) -> jax.Array:
     grad_hc_imag = jax.vmap(jax.grad(hc_imag), in_axes=(None, 0))(theta, F_SIG)
     # Func return
     return grad_hc_real + grad_hc_imag * 1j
+
+
+# WIP
+# =========================================================================== #
+# FIM - Main ==> log.sqrt.det.FIM
+
+
+def log_sqrt_det_hp(theta: jnp.ndarray):
+    """
+    Return the log based square root of the determinant of
+    Fisher matrix projected onto the mc, eta space
+    for hp waveform results
+    """
+    # Calculation
+    # try:
+    data_fim = projected_fim_hp(theta)
+    # except AssertionError:
+    #    data_fim = jnp.nan
+    # Func return - log density
+    return jnp.log(jnp.sqrt(jnp.linalg.det(data_fim)))
+
+
+def log_sqrt_det_hc(theta: jnp.ndarray):
+    """
+    Return the log based square root of the determinant of
+    Fisher matrix projected onto the mc, eta space
+    for hc waveform results
+    """
+    # Calculation
+    # try:
+    data_fim = projected_fim_hc(theta)
+    # except AssertionError:
+    #    data_fim = jnp.nan
+    # Func return - log density
+    return jnp.log(jnp.sqrt(jnp.linalg.det(data_fim)))
+
+
+# FIM projection sub func
+
+
+def fim_phic(full_fim: jnp.ndarray, nd_val: int):
+    """
+    Calculate the conditioned matrix projected onto coalecense phase
+    """
+    # Equation 16 from Dent & Veitch
+    fim_result = jnp.array(
+        [
+            full_fim[i, j] - full_fim[i, -1] * full_fim[-1, j] / full_fim[-1, -1]
+            for i in range(nd_val - 1)
+            for j in range(nd_val - 1)
+        ]
+    ).reshape([nd_val - 1, nd_val - 1])
+    # Func return
+    return fim_result
+
+
+def fim_tc(gamma: jnp.ndarray, nd_val: int):
+    """
+    Project the conditional matrix back onto coalecense time
+    """
+    # Equation 18 Dent & Veitch
+    fim_result = jnp.array(
+        [
+            gamma[i, j] - gamma[i, -1] * gamma[-1, j] / gamma[-1, -1]
+            for i in range(nd_val - 2)
+            for j in range(nd_val - 2)
+        ]
+    ).reshape([nd_val - 2, nd_val - 2])
+    # Func return
+    return fim_result
+
+
+# %%
+# FIM - Projected and simple FIM
+
+
+def projected_fim_hp(thetas: jnp.ndarray):
+    """
+    Return the Fisher matrix projected onto the mc, eta space
+    for hp waveform results
+    """
+    # Get full FIM and dimensions
+    full_fim = fim_hp(thetas)
+    nd_val = thetas.shape[-1]
+    # Calculate the conditioned matrix for phase
+    gamma = fim_phic(full_fim, nd_val)
+    # Calculate the conditioned matrix for time
+    metric = fim_tc(gamma, nd_val)
+    # Func return
+    return metric
+
+
+def projected_fim_hc(thetas: jnp.ndarray):
+    """
+    Return the Fisher matrix projected onto the mc, eta space
+    for hc waveform results
+    """
+    # Get full FIM and dimensions
+    full_fim = fim_hc(thetas)
+    nd_val = thetas.shape[-1]
+    # Calculate the conditioned matrix for phase
+    gamma = fim_phic(full_fim, nd_val)
+    # Calculate the conditioned matrix for time
+    metric = fim_tc(gamma, nd_val)
+    # Func return
+    return metric
+
+
+# FIM packers
+
+
+def fim_hp(thetas: jnp.ndarray):
+    """
+    Returns the fisher information matrix
+    at a general value of mc, eta, tc, phic
+    for hp waveform
+
+    Args:
+        thetas (array): [Mc, eta, t_c, phi_c]. Shape 1x4
+    """
+    # Generate the waveform derivatives
+    grads = grad_hp(thetas)
+    # Get dimensions
+    nd_val = grads.shape[-1]
+    # Get FIM result
+    fim_result = fim_base(grads, nd_val)
+    # Func return
+    return fim_result
+
+
+def fim_hc(thetas: jnp.ndarray):
+    """
+    Returns the fisher information matrix
+    at a general value of mc, eta, tc, phic
+    for hc waveform
+
+    Args:
+        thetas (array): [Mc, eta, t_c, phi_c]. Shape 1x4
+    """
+    # Generate the waveform derivatives
+    grads = grad_hc(thetas)
+    # Get dimensions
+    nd_val = grads.shape[-1]
+    # Get FIM result
+    fim_result = fim_base(grads, nd_val)
+    # Func return
+    return fim_result
+
+
+def fim_base(grads: jnp.ndarray, nd_val: int):
+    """
+    Basic FIM entry packer
+    """
+    # Get FIM entries from inner products calculations
+    entries = {
+        (i, j): inner_prod(grads[:, i], grads[:, j])
+        for j in range(nd_val)
+        for i in range(j + 1)
+    }
+    # Fill the matrix from the precalculated entries
+    fim_result = jnp.array(
+        [entries[tuple(sorted([i, j]))] for j in range(nd_val) for i in range(nd_val)]
+    ).reshape([nd_val, nd_val])
+    # Func return
+    return fim_result
