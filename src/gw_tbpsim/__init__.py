@@ -25,7 +25,7 @@ jax.config.update("jax_compilation_cache_dir", ".jaxcache")
 # =========================================================================== #
 
 
-def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
+def inner_prod_old(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
     """
     Noise weighted inner product between some vectors a and b.
 
@@ -38,6 +38,23 @@ def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
     """
     # Get integrand - jnp.abs(vec_a.conj() * vec_b) / F_PSD
     integrand = jnp.abs(vec_a.conj() * vec_b) / F_PSD
+    # Return one side noise weighted inner products
+    return 4 * F_DIFF * integrand.sum(axis=-1)
+
+
+def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
+    """
+    Noise weighted inner product between some vectors a and b.
+
+    Args:
+        vec_a (jax.Array): Vector a.
+        vec_b (jax.Array): Vector b.
+
+    Returns:
+        jax.Array: One side noise weighted inner product.
+    """
+    # Get integrand - (vec_a.conj() * vec_b).real / F_PSD
+    integrand = (vec_a.conj() * vec_b).real / F_PSD
     # Return one side noise weighted inner products
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
@@ -59,11 +76,11 @@ def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
         jax.Array: The real part of normalized hp waveform
     """
     # Get hp waveform with Ripple
-    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
     # Calculate normalized waveform
     wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
     # Func return
-    return wf_norm.real[0]
+    return wf_norm.real
 
 
 def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
@@ -79,11 +96,11 @@ def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
         jax.Array: The imaginary part of normalized hp waveform
     """
     # Get hp waveform with Ripple
-    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
     # Calculate normalized waveform
     wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
     # Func return
-    return wf_norm.imag[0]
+    return wf_norm.imag
 
 
 def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
@@ -99,11 +116,11 @@ def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
         jax.Array: The real part of normalized hc waveform
     """
     # Get hc waveform with Ripple
-    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
     # Calculate normalized waveform
     wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
     # Func return
-    return wf_norm.real[0]
+    return wf_norm.real
 
 
 def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
@@ -119,11 +136,11 @@ def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
         jax.Array: The imaginary part of normalized hc waveform
     """
     # Get hc waveform with Ripple
-    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(jnp.array([f_sig]), theta, F_REF)
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
     # Calculate normalized waveform
     wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
     # Func return
-    return wf_norm.imag[0]
+    return wf_norm.imag
 
 
 # Gradiant Func
