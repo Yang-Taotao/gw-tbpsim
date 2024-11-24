@@ -25,19 +25,19 @@ jax.config.update("jax_compilation_cache_dir", ".jaxcache")
 # =========================================================================== #
 
 
-def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
+def inner_prod(array_a: jax.Array, array_b: jax.Array) -> jax.Array:
     """
-    Noise weighted inner product between some vectors a and b.
+    Noise weighted inner product between array array_a and array_b.
 
     Args:
-        vec_a (jax.Array): Vector a.
-        vec_b (jax.Array): Vector b.
+        array_a (jax.Array): Array a.
+        array_b (jax.Array): Array b.
 
     Returns:
         jax.Array: One side noise weighted inner product.
     """
-    # Get integrand - (vec_a.conj() * vec_b).real / F_PSD
-    integrand = (vec_a.conj() * vec_b).real / F_PSD
+    # Get integrand
+    integrand = (array_a.conj() * array_b).real / F_PSD
     # Return one side noise weighted inner products
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
@@ -48,15 +48,15 @@ def inner_prod(vec_a: jax.Array, vec_b: jax.Array) -> jax.Array:
 
 def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hp waveform, real part.
+    Normalized hp waveform, hp.real.
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        f_sig (jax.Array): Signal frequencies array
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
 
     Returns:
-        jax.Array: The real part of normalized hp waveform
+        jax.Array: The real part of normalized hp waveform.
     """
     # Get hp waveform with Ripple
     wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
@@ -68,15 +68,15 @@ def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
 
 def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hp waveform, imaginary part.
+    Normalized hp waveform, hp.imag.
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        f_sig (jax.Array): Signal frequencies array
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
 
     Returns:
-        jax.Array: The imaginary part of normalized hp waveform
+        jax.Array: The imaginary part of normalized hp waveform.
     """
     # Get hp waveform with Ripple
     wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
@@ -88,15 +88,15 @@ def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
 
 def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hc waveform, real part.
+    Normalized hc waveform, hc.real.
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        f_sig (jax.Array): Signal frequencies array
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
 
     Returns:
-        jax.Array: The real part of normalized hc waveform
+        jax.Array: The real part of normalized hc waveform.
     """
     # Get hc waveform with Ripple
     _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
@@ -108,15 +108,15 @@ def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
 
 def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    Normalized hc waveform, imaginary part.
+    Normalized hc waveform, hc.imag.
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
-        f_sig (jax.Array): Signal frequencies array
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
 
     Returns:
-        jax.Array: The imaginary part of normalized hc waveform
+        jax.Array: The imaginary part of normalized hc waveform.
     """
     # Get hc waveform with Ripple
     _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
@@ -136,11 +136,11 @@ def grad_hp(theta: jax.Array) -> jax.Array:
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
         jax.Array: Mapped gradients
-            d(hp) / d(thetas)
+            evaluated as d(hp) / d(thetas).
     """
     # Map gradiant result
     grad_hp_real = jax.vmap(jax.grad(hp_real), in_axes=(None, 0))(theta, F_SIG)
@@ -155,11 +155,11 @@ def grad_hc(theta: jax.Array) -> jax.Array:
 
     Args:
         theta (jax.Array): GW param
-            mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
         jax.Array: Mapped gradients
-            d(hp) / d(thetas)
+            evaluated as d(hp) / d(thetas).
     """
 
     # Map gradiant result
@@ -171,47 +171,61 @@ def grad_hc(theta: jax.Array) -> jax.Array:
 
 # WIP
 # =========================================================================== #
-# FIM - Main ==> log.sqrt.det.FIM
+# FIM - Main ==> log.sqrt.det.FIM => density statictics
 
 
-def log_sqrt_det_hp(theta: jnp.ndarray):
+def log_sqrt_det_hp(theta: jnp.Array) -> jnp.Array:
     """
-    Return the log based square root of the determinant of
-    Fisher matrix projected onto the mc, eta space
-    for hp waveform results
-    """
-    # Calculation
-    # try:
-    data_fim = projected_fim_hp(theta)
-    # except AssertionError:
-    #    data_fim = jnp.nan
-    # Func return - log density
-    return jnp.log(jnp.sqrt(jnp.linalg.det(data_fim)))
+    Calculate intermediate statistics for density building
+    with log.sqrt.det.Metric on hp waveform based results.
 
+    Args:
+        theta (jnp.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
-def log_sqrt_det_hc(theta: jnp.ndarray):
-    """
-    Return the log based square root of the determinant of
-    Fisher matrix projected onto the mc, eta space
-    for hc waveform results
+    Returns:
+        jnp.Array: intermediate statistics
+            as log.sqrt.det.Metric.
     """
     # Calculation
-    # try:
-    data_fim = projected_fim_hc(theta)
-    # except AssertionError:
-    #    data_fim = jnp.nan
+    metric = projected_fim_hp(theta)
     # Func return - log density
-    return jnp.log(jnp.sqrt(jnp.linalg.det(data_fim)))
+    return jnp.log(jnp.sqrt(jnp.linalg.det(metric)))
+
+
+def log_sqrt_det_hc(theta: jnp.Array) -> jnp.Array:
+    """
+    Calculate intermediate statistics for density building
+    with log.sqrt.det.Metric on hc waveform based results.
+
+    Args:
+        theta (jnp.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+
+    Returns:
+        jnp.Array: intermediate statistics
+            as log.sqrt.det.Metric.
+    """
+    # Calculation
+    metric = projected_fim_hc(theta)
+    # Func return - log density
+    return jnp.log(jnp.sqrt(jnp.linalg.det(metric)))
 
 
 # %%
 # FIM - Projected and simple FIM
 
 
-def projected_fim_hp(thetas: jnp.ndarray):
+def projected_fim_hp(thetas: jnp.Array) -> jnp.Array:
     """
-    Return the Fisher matrix projected onto the mc, eta space
-    for hp waveform results
+    Projected Fisher Information Matrix function call for hp waveforms.
+
+    Args:
+        thetas (jnp.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+
+    Returns:
+        jnp.Array: Projected metric on mc, eta space for hp waveforms.
     """
     # Get full FIM and dimensions
     full_fim = fim_hp(thetas)
@@ -223,10 +237,16 @@ def projected_fim_hp(thetas: jnp.ndarray):
     return metric
 
 
-def projected_fim_hc(thetas: jnp.ndarray):
+def projected_fim_hc(thetas: jnp.Array) -> jnp.Array:
     """
-    Return the Fisher matrix projected onto the mc, eta space
-    for hc waveform results
+    Projected Fisher Information Matrix function call for hc waveforms.
+
+    Args:
+        thetas (jnp.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+
+    Returns:
+        jnp.Array: Projected metric on mc, eta space for hc waveforms.
     """
     # Get full FIM and dimensions
     full_fim = fim_hc(thetas)
@@ -238,39 +258,61 @@ def projected_fim_hc(thetas: jnp.ndarray):
     return metric
 
 
-# FIM projection sub func - NAN issue
+# FIM - projection sub func
 
 
-def fim_phic(full_fim: jnp.ndarray):
+def fim_phic(fim: jnp.ndarray):
     """
-    Calculate the conditioned matrix projected onto coalecense phase
+    Project Fisher Information Matrix onto phic with Eq. 16 of 1311.7174.
+
+    Args:
+        fim (jnp.ndarray): Fisher Information Matrix.
+
+    Returns:
+        jnp.Array: projected conditional matrix gamma.
     """
     # Local repo
-    nd_val = full_fim.shape[-1]
+    nd_val = fim.shape[-1]
     idx_i = jnp.arange(nd_val - 1)
     idx_j = jnp.arange(nd_val - 1)
-    last_entry = full_fim[-1, -1]
+    last_entry = fim[-1, -1]
 
     # Eq. 16 - Dent & Veitch
     def dv_16(i: int, j: int) -> float:
-        # Calcualte offset entry
-        offset = full_fim[i, -1] * full_fim[-1, j] / last_entry
-        # Conditional offset - prevent div by 0
-        fim_temp = jnp.where(last_entry != 0, full_fim[i, j] - offset, full_fim[i, j])
-        # Func return
-        return fim_temp
+        """
+        Conditional matrix entry calculation for Eq. 16 of 1311.7174.
 
-    # Build result
-    fim_result = jax.vmap(jax.vmap(dv_16, in_axes=(None, 0)), in_axes=(0, None))(
+        Args:
+            i (int): index i.
+            j (int): index j.
+
+        Returns:
+            float: projected conditional matrix entry of gamma.
+        """
+        # Calcualte offset entry
+        offset = fim[i, -1] * fim[-1, j] / last_entry
+        # Get entry result with conditional offset - prevent div by 0
+        entry = jnp.where(last_entry != 0, fim[i, j] - offset, fim[i, j])
+        # Func return
+        return entry
+
+    # Build gamma result
+    gamma = jax.vmap(jax.vmap(dv_16, in_axes=(None, 0)), in_axes=(0, None))(
         idx_i, idx_j
     )
-    # # Func return
-    return fim_result
+    # Func return
+    return gamma
 
 
-def fim_tc(gamma: jnp.ndarray):
+def fim_tc(gamma: jnp.Array) -> jnp.Array:
     """
-    Project the conditional matrix back onto coalecense time
+    Project conditional matrix back onto tc with Eq. 18 of 1311.7174.
+
+    Args:
+        gamma (jnp.ndarray): conditional matrix gamma.
+
+    Returns:
+        jnp.Array: projected metric.
     """
     # Local repo
     nd_val = gamma.shape[-1]
@@ -280,38 +322,65 @@ def fim_tc(gamma: jnp.ndarray):
 
     # Eq. 18 - Dent & Veitch
     def dv_18(i: int, j: int) -> float:
+        """
+        Metric entry calculation for Eq. 18 of 1311.7174.
+
+        Args:
+            i (int): index i.
+            j (int): index j.
+
+        Returns:
+            float: projected metric entry.
+        """
         # Calculate offset entry
         offset = gamma[i, -1] * gamma[-1, j] / gamma[-1, -1]
-        # Conditional offset - prevent div by 0
-        gamma_temp = jnp.where(last_entry != 0, gamma[i, j] - offset, gamma[i, j])
+        # Get entry result with conditional offset - prevent div by 0
+        entry = jnp.where(last_entry != 0, gamma[i, j] - offset, gamma[i, j])
         # Func return
-        return gamma_temp
+        return entry
 
-    # Build result
-    gamma_result = jax.vmap(jax.vmap(dv_18, in_axes=(None, 0)), in_axes=(0, None))(
+    # Build metric result
+    metric = jax.vmap(jax.vmap(dv_18, in_axes=(None, 0)), in_axes=(0, None))(
         idx_i, idx_j
     )
     # Func return
-    return gamma_result
+    return metric
 
 
-# FIM packers - checked
+# FIM builder
 
 
-def fim_base(grads: jnp.ndarray):
+def fim_core(grads: jnp.Array) -> jnp.Array:
     """
-    Basic FIM entry packer
+    Fisher Information Matrix builder.
+
+    Args:
+        grads (jnp.Array): GW waveform gradients
+            with shape (F_SIG.shape[0], THETA_ARRAY.shape[-1]).
+
+    Returns:
+        jnp.Array: Fisher Information Matrix.
     """
     # Get parameter shape as nd_val
     nd_val = grads.shape[-1]
+    # Get FIM index arrays
+    idx_i, idx_j = jnp.triu_indices(nd_val)
 
     # FIM entry calculator
     def fim_entry(i: int, j: int) -> float:
-        """Calculate FIM entry with one side noise weighted inner product"""
+        """
+        Calculate FIM entry with one side noise weighted inner product.
+
+        Args:
+            i (int): index i.
+            j (int): index j.
+
+        Returns:
+            float: FIM entry at (i, j) index.
+        """
+        # Return
         return inner_prod(grads[:, i], grads[:, j])
 
-    # Get FIM index arrays
-    idx_i, idx_j = jnp.triu_indices(nd_val)
     # Calculate FIM entries of upper half
     entries = jax.vmap(fim_entry)(idx_i, idx_j)
     # Construct temporary FIM
@@ -319,40 +388,40 @@ def fim_base(grads: jnp.ndarray):
     # Populate upper trig with entries
     fim_temp = fim_temp.at[idx_i, idx_j].set(entries)
     # Populate lower trig with entries flipped
-    fim_result = fim_temp + jnp.triu(fim_temp, k=1).T
+    fim = fim_temp + jnp.triu(fim_temp, k=1).T
     # Func return
-    return fim_result
+    return fim
 
 
-def fim_hp(thetas: jnp.ndarray):
+def fim_hp(thetas: jnp.Array) -> jnp.Array:
     """
-    Returns the fisher information matrix
-    at a general value of mc, eta, tc, phic
-    for hp waveform
+    Build Fisher Information Matrix for hp waveform.
 
     Args:
-        thetas (array): [Mc, eta, t_c, phi_c]. Shape 1x4
+        thetas (jnp.Array): GW param
+            [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination]
+
+    Returns:
+        jnp.Array: Fisher Information Matrix of hp waveform
     """
     # Generate the waveform derivatives
     grads = grad_hp(thetas)
-    # Get FIM result
-    fim_result = fim_base(grads)
-    # Func return
-    return fim_result
+    # Return FIM result
+    return fim_core(grads)
 
 
-def fim_hc(thetas: jnp.ndarray):
+def fim_hc(thetas: jnp.Array) -> jnp.Array:
     """
-    Returns the fisher information matrix
-    at a general value of mc, eta, tc, phic
-    for hc waveform
+    Build Fisher Information Matrix for hc waveform.
 
     Args:
-        thetas (array): [Mc, eta, t_c, phi_c]. Shape 1x4
+        thetas (jnp.Array): GW param
+            [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination]
+
+    Returns:
+        jnp.Array: Fisher Information Matrix of hc waveform
     """
     # Generate the waveform derivatives
     grads = grad_hc(thetas)
-    # Get FIM result
-    fim_result = fim_base(grads)
-    # Func return
-    return fim_result
+    # Return FIM result
+    return fim_core(grads)
