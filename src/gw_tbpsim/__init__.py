@@ -1,5 +1,5 @@
 """
-Core methods.
+Core methods for gw_tbsim package.
 """
 
 # Imports
@@ -174,17 +174,17 @@ def grad_hc(theta: jax.Array) -> jax.Array:
 # FIM - Main ==> log.sqrt.det.FIM => density statictics
 
 
-def log_sqrt_det_hp(theta: jnp.Array) -> jnp.Array:
+def log_sqrt_det_hp(theta: jax.Array) -> jax.Array:
     """
     Calculate intermediate statistics for density building
     with log.sqrt.det.Metric on hp waveform based results.
 
     Args:
-        theta (jnp.Array): GW param
+        theta (jax.Array): GW param
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
-        jnp.Array: intermediate statistics
+        jax.Array: intermediate statistics
             as log.sqrt.det.Metric.
     """
     # Calculation
@@ -193,17 +193,17 @@ def log_sqrt_det_hp(theta: jnp.Array) -> jnp.Array:
     return jnp.log(jnp.sqrt(jnp.linalg.det(metric)))
 
 
-def log_sqrt_det_hc(theta: jnp.Array) -> jnp.Array:
+def log_sqrt_det_hc(theta: jax.Array) -> jax.Array:
     """
     Calculate intermediate statistics for density building
     with log.sqrt.det.Metric on hc waveform based results.
 
     Args:
-        theta (jnp.Array): GW param
+        theta (jax.Array): GW param
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
-        jnp.Array: intermediate statistics
+        jax.Array: intermediate statistics
             as log.sqrt.det.Metric.
     """
     # Calculation
@@ -216,16 +216,16 @@ def log_sqrt_det_hc(theta: jnp.Array) -> jnp.Array:
 # FIM - Projected and simple FIM
 
 
-def projected_fim_hp(thetas: jnp.Array) -> jnp.Array:
+def projected_fim_hp(thetas: jax.Array) -> jax.Array:
     """
     Projected Fisher Information Matrix function call for hp waveforms.
 
     Args:
-        thetas (jnp.Array): GW param
+        thetas (jax.Array): GW param
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
-        jnp.Array: Projected metric on mc, eta space for hp waveforms.
+        jax.Array: Projected metric on mc, eta space for hp waveforms.
     """
     # Get full FIM and dimensions
     full_fim = fim_hp(thetas)
@@ -237,16 +237,16 @@ def projected_fim_hp(thetas: jnp.Array) -> jnp.Array:
     return metric
 
 
-def projected_fim_hc(thetas: jnp.Array) -> jnp.Array:
+def projected_fim_hc(thetas: jax.Array) -> jax.Array:
     """
     Projected Fisher Information Matrix function call for hc waveforms.
 
     Args:
-        thetas (jnp.Array): GW param
+        thetas (jax.Array): GW param
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
 
     Returns:
-        jnp.Array: Projected metric on mc, eta space for hc waveforms.
+        jax.Array: Projected metric on mc, eta space for hc waveforms.
     """
     # Get full FIM and dimensions
     full_fim = fim_hc(thetas)
@@ -269,7 +269,7 @@ def fim_phic(fim: jnp.ndarray):
         fim (jnp.ndarray): Fisher Information Matrix.
 
     Returns:
-        jnp.Array: projected conditional matrix gamma.
+        jax.Array: projected conditional matrix gamma.
     """
     # Local repo
     nd_val = fim.shape[-1]
@@ -304,7 +304,7 @@ def fim_phic(fim: jnp.ndarray):
     return gamma
 
 
-def fim_tc(gamma: jnp.Array) -> jnp.Array:
+def fim_tc(gamma: jax.Array) -> jax.Array:
     """
     Project conditional matrix back onto tc with Eq. 18 of 1311.7174.
 
@@ -312,7 +312,7 @@ def fim_tc(gamma: jnp.Array) -> jnp.Array:
         gamma (jnp.ndarray): conditional matrix gamma.
 
     Returns:
-        jnp.Array: projected metric.
+        jax.Array: projected metric.
     """
     # Local repo
     nd_val = gamma.shape[-1]
@@ -350,16 +350,16 @@ def fim_tc(gamma: jnp.Array) -> jnp.Array:
 # FIM builder
 
 
-def fim_core(grads: jnp.Array) -> jnp.Array:
+def fim_core(grads: jax.Array) -> jax.Array:
     """
     Fisher Information Matrix builder.
 
     Args:
-        grads (jnp.Array): GW waveform gradients
+        grads (jax.Array): GW waveform gradients
             with shape (F_SIG.shape[0], THETA_ARRAY.shape[-1]).
 
     Returns:
-        jnp.Array: Fisher Information Matrix.
+        jax.Array: Fisher Information Matrix.
     """
     # Get parameter shape as nd_val
     nd_val = grads.shape[-1]
@@ -393,16 +393,16 @@ def fim_core(grads: jnp.Array) -> jnp.Array:
     return fim
 
 
-def fim_hp(thetas: jnp.Array) -> jnp.Array:
+def fim_hp(thetas: jax.Array) -> jax.Array:
     """
     Build Fisher Information Matrix for hp waveform.
 
     Args:
-        thetas (jnp.Array): GW param
+        thetas (jax.Array): GW param
             [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination]
 
     Returns:
-        jnp.Array: Fisher Information Matrix of hp waveform
+        jax.Array: Fisher Information Matrix of hp waveform
     """
     # Generate the waveform derivatives
     grads = grad_hp(thetas)
@@ -410,16 +410,16 @@ def fim_hp(thetas: jnp.Array) -> jnp.Array:
     return fim_core(grads)
 
 
-def fim_hc(thetas: jnp.Array) -> jnp.Array:
+def fim_hc(thetas: jax.Array) -> jax.Array:
     """
     Build Fisher Information Matrix for hc waveform.
 
     Args:
-        thetas (jnp.Array): GW param
+        thetas (jax.Array): GW param
             [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination]
 
     Returns:
-        jnp.Array: Fisher Information Matrix of hc waveform
+        jax.Array: Fisher Information Matrix of hc waveform
     """
     # Generate the waveform derivatives
     grads = grad_hc(thetas)
