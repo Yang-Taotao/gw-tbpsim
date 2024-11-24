@@ -204,39 +204,95 @@ def log_sqrt_det_hc(theta: jnp.ndarray):
     return jnp.log(jnp.sqrt(jnp.linalg.det(data_fim)))
 
 
-# FIM projection sub func
+# %%
+# FIM - Projected and simple FIM
 
 
-def fim_phic(full_fim: jnp.ndarray, nd_val: int):
+def projected_fim_hp(thetas: jnp.ndarray):
+    """
+    Return the Fisher matrix projected onto the mc, eta space
+    for hp waveform results
+    """
+    # Get full FIM and dimensions
+    full_fim = fim_hp(thetas)
+    # Calculate the conditioned matrix for phase
+    gamma = fim_phic(full_fim)
+    # Calculate the conditioned matrix for time
+    metric = fim_tc(gamma)
+    # Func return
+    return metric
+
+
+def projected_fim_hc(thetas: jnp.ndarray):
+    """
+    Return the Fisher matrix projected onto the mc, eta space
+    for hc waveform results
+    """
+    # Get full FIM and dimensions
+    full_fim = fim_hc(thetas)
+    # Calculate the conditioned matrix for phase
+    gamma = fim_phic(full_fim)
+    # Calculate the conditioned matrix for time
+    metric = fim_tc(gamma)
+    # Func return
+    return metric
+
+
+# FIM projection sub func - NAN issue
+
+
+def fim_phic(full_fim: jnp.ndarray):
     """
     Calculate the conditioned matrix projected onto coalecense phase
     """
-    # Equation 16 from Dent & Veitch
-    fim_result = jnp.array(
-        [
-            full_fim[i, j] - full_fim[i, -1] * full_fim[-1, j] / full_fim[-1, -1]
-            for i in range(nd_val - 1)
-            for j in range(nd_val - 1)
-        ]
-    ).reshape([nd_val - 1, nd_val - 1])
-    # Func return
+    # Local repo
+    nd_val = full_fim.shape[-1]
+    idx_i = jnp.arange(nd_val - 1)
+    idx_j = jnp.arange(nd_val - 1)
+    last_entry = full_fim[-1, -1]
+
+    # Eq. 16 - Dent & Veitch
+    def dv_16(i: int, j: int) -> float:
+        # Calcualte offset entry
+        offset = full_fim[i, -1] * full_fim[-1, j] / last_entry
+        # Conditional offset - prevent div by 0
+        fim_temp = jnp.where(last_entry != 0, full_fim[i, j] - offset, full_fim[i, j])
+        # Func return
+        return fim_temp
+
+    # Build result
+    fim_result = jax.vmap(jax.vmap(dv_16, in_axes=(None, 0)), in_axes=(0, None))(
+        idx_i, idx_j
+    )
+    # # Func return
     return fim_result
 
 
-def fim_tc(gamma: jnp.ndarray, nd_val: int):
+def fim_tc(gamma: jnp.ndarray):
     """
     Project the conditional matrix back onto coalecense time
     """
-    # Equation 18 Dent & Veitch
-    fim_result = jnp.array(
-        [
-            gamma[i, j] - gamma[i, -1] * gamma[-1, j] / gamma[-1, -1]
-            for i in range(nd_val - 2)
-            for j in range(nd_val - 2)
-        ]
-    ).reshape([nd_val - 2, nd_val - 2])
+    # Local repo
+    nd_val = gamma.shape[-1]
+    idx_i = jnp.arange(nd_val - 1)
+    idx_j = jnp.arange(nd_val - 1)
+    last_entry = gamma[-1, -1]
+
+    # Eq. 18 - Dent & Veitch
+    def dv_18(i: int, j: int) -> float:
+        # Calculate offset entry
+        offset = gamma[i, -1] * gamma[-1, j] / gamma[-1, -1]
+        # Conditional offset - prevent div by 0
+        gamma_temp = jnp.where(last_entry != 0, gamma[i, j] - offset, gamma[i, j])
+        # Func return
+        return gamma_temp
+
+    # Build result
+    gamma_result = jax.vmap(jax.vmap(dv_18, in_axes=(None, 0)), in_axes=(0, None))(
+        idx_i, idx_j
+    )
     # Func return
-    return fim_result
+    return gamma_result
 
 
 # FIM packers - checked
