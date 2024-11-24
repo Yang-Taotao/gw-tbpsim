@@ -256,43 +256,33 @@ def fim_tc(gamma: jnp.ndarray, nd_val: int):
     return fim_result
 
 
-# %%
-# FIM - Projected and simple FIM
+# FIM packers - checked
 
 
-def projected_fim_hp(thetas: jnp.ndarray):
+def fim_base(grads: jnp.ndarray):
     """
-    Return the Fisher matrix projected onto the mc, eta space
-    for hp waveform results
+    Basic FIM entry packer
     """
-    # Get full FIM and dimensions
-    full_fim = fim_hp(thetas)
-    nd_val = thetas.shape[-1]
-    # Calculate the conditioned matrix for phase
-    gamma = fim_phic(full_fim, nd_val)
-    # Calculate the conditioned matrix for time
-    metric = fim_tc(gamma, nd_val)
+    # Get parameter shape as nd_val
+    nd_val = grads.shape[-1]
+
+    # FIM entry calculator
+    def fim_entry(i: int, j: int) -> float:
+        """Calculate FIM entry with one side noise weighted inner product"""
+        return inner_prod(grads[:, i], grads[:, j])
+
+    # Get FIM index arrays
+    idx_i, idx_j = jnp.triu_indices(nd_val)
+    # Calculate FIM entries of upper half
+    entries = jax.vmap(fim_entry)(idx_i, idx_j)
+    # Construct temporary FIM
+    fim_temp = jnp.zeros((nd_val, nd_val))
+    # Populate upper trig with entries
+    fim_temp = fim_temp.at[idx_i, idx_j].set(entries)
+    # Populate lower trig with entries flipped
+    fim_result = fim_temp + jnp.triu(fim_temp, k=1).T
     # Func return
-    return metric
-
-
-def projected_fim_hc(thetas: jnp.ndarray):
-    """
-    Return the Fisher matrix projected onto the mc, eta space
-    for hc waveform results
-    """
-    # Get full FIM and dimensions
-    full_fim = fim_hc(thetas)
-    nd_val = thetas.shape[-1]
-    # Calculate the conditioned matrix for phase
-    gamma = fim_phic(full_fim, nd_val)
-    # Calculate the conditioned matrix for time
-    metric = fim_tc(gamma, nd_val)
-    # Func return
-    return metric
-
-
-# FIM packers
+    return fim_result
 
 
 def fim_hp(thetas: jnp.ndarray):
@@ -306,10 +296,8 @@ def fim_hp(thetas: jnp.ndarray):
     """
     # Generate the waveform derivatives
     grads = grad_hp(thetas)
-    # Get dimensions
-    nd_val = grads.shape[-1]
     # Get FIM result
-    fim_result = fim_base(grads, nd_val)
+    fim_result = fim_base(grads)
     # Func return
     return fim_result
 
@@ -325,27 +313,7 @@ def fim_hc(thetas: jnp.ndarray):
     """
     # Generate the waveform derivatives
     grads = grad_hc(thetas)
-    # Get dimensions
-    nd_val = grads.shape[-1]
     # Get FIM result
-    fim_result = fim_base(grads, nd_val)
-    # Func return
-    return fim_result
-
-
-def fim_base(grads: jnp.ndarray, nd_val: int):
-    """
-    Basic FIM entry packer
-    """
-    # Get FIM entries from inner products calculations
-    entries = {
-        (i, j): inner_prod(grads[:, i], grads[:, j])
-        for j in range(nd_val)
-        for i in range(j + 1)
-    }
-    # Fill the matrix from the precalculated entries
-    fim_result = jnp.array(
-        [entries[tuple(sorted([i, j]))] for j in range(nd_val) for i in range(nd_val)]
-    ).reshape([nd_val, nd_val])
+    fim_result = fim_base(grads)
     # Func return
     return fim_result
