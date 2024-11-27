@@ -128,50 +128,40 @@ def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     return wf_norm.imag
 
 
-# Gradiant Func
 # =========================================================================== #
+#
 
 
-def grad_hp(theta: jax.Array) -> jax.Array:
+@jax.jit
+def log_den_hp(thetas: jax.Array) -> jax.Array:
     """
-    Gradients of normalized hp against hp parameters.
+    Log density distribution of hp waveforms. Applied jax.jit().
 
     Args:
-        theta (jax.Array): GW param
-            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        thetas (jax.Array): GW parameter matrix at (n, n, 8) shape.
 
     Returns:
-        jax.Array: Mapped gradients
-            evaluated as d(hp) / d(thetas).
+        jax.Array: Log density distribution at (n, n) shape.
     """
-    # Map gradiant result
-    grad_hp_real = jax.vmap(jax.grad(hp_real), in_axes=(None, 0))(theta, F_SIG)
-    grad_hp_imag = jax.vmap(jax.grad(hp_imag), in_axes=(None, 0))(theta, F_SIG)
-    # Func return - complex128 dtype necessary
-    return jnp.complex128(grad_hp_real + grad_hp_imag * 1j)
+    # Func return
+    return jax.vmap(jax.vmap(log_sqrt_det_hp))(thetas)
 
 
-def grad_hc(theta: jax.Array) -> jax.Array:
+@jax.jit
+def log_den_hc(thetas: jax.Array) -> jax.Array:
     """
-    Gradients of normalized hp against hp parameters.
+    Log density distribution of hc waveforms. Applied jax.jit().
 
     Args:
-        theta (jax.Array): GW param
-            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        thetas (jax.Array): GW parameter matrix at (n, n, 8) shape.
 
     Returns:
-        jax.Array: Mapped gradients
-            evaluated as d(hp) / d(thetas).
+        jax.Array: Log density distribution at (n, n) shape.
     """
-
-    # Map gradiant result
-    grad_hc_real = jax.vmap(jax.grad(hc_real), in_axes=(None, 0))(theta, F_SIG)
-    grad_hc_imag = jax.vmap(jax.grad(hc_imag), in_axes=(None, 0))(theta, F_SIG)
-    # Func return - complex128 dtype necessary
-    return jnp.complex128(grad_hc_real + grad_hc_imag * 1j)
+    # Func return
+    return jax.vmap(jax.vmap(log_sqrt_det_hc))(thetas)
 
 
-# WIP
 # =========================================================================== #
 # FIM - Main ==> log.sqrt.det.FIM => density statictics
 
