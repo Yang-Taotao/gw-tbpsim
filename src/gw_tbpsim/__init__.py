@@ -44,22 +44,30 @@ def inner_prod(array_a: jax.Array, array_b: jax.Array) -> jax.Array:
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
 
-# Waveform Func
-# =========================================================================== #
-
-
-def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+def theta_gen(thetas: jax.Array, mcs: jax.Array, etas: jax.Array) -> jax.Array:
     """
-    Normalized hp waveform, hp.real.
+    GW parameter matrix builder.
 
     Args:
-        theta (jax.Array): GW param
+        thetas (jax.Array): GW parameter of shape (8, )
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
-        f_sig (jax.Array): Signal frequencies array.
+        mcs (jax.Array): Chirp mass parameter array at (n, ) shape.
+        etas (jax.Array): Symmetric mass ratio parameter array at (n, ) shape.
 
     Returns:
-        jax.Array: The real part of normalized hp waveform.
+        jax.Array: GW parameter matrix at (n, n, 8) shape.
     """
+    # Check for mcs, etas shape match
+    assert mcs.shape == etas.shape
+    theta_dim = mcs.shape[0]
+    # Build theta parameters
+    theta = jnp.tile(thetas, (theta_dim, theta_dim, 1)).astype(jnp.float64)
+    theta = theta.at[:, :, 0].set(mcs[:, jnp.newaxis])
+    theta = theta.at[:, :, 1].set(etas[jnp.newaxis, :])
+    # Return
+    return theta
+
+
 # =========================================================================== #
 # FIM - Batching
 
