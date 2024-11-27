@@ -60,52 +60,35 @@ def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     Returns:
         jax.Array: The real part of normalized hp waveform.
     """
-    # Get hp waveform with Ripple
-    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
-    # Calculate normalized waveform
-    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
-    # Func return
-    return wf_norm.real
+# =========================================================================== #
+# FIM - Batching
 
 
-def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+def mock_compile(thetas: jax.Array) -> tuple[jax.Array, jax.Array]:
     """
-    Normalized hp waveform, hp.imag.
+    Mock compilation function for running log_den_hp() and log_den_hc()
+    with thetas.shape at (10, 10, 8).
 
     Args:
-        theta (jax.Array): GW param
-            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
-        f_sig (jax.Array): Signal frequencies array.
+        thetas (jax.Array): GW parameter matrix at (10, 10, 8) shape.
 
     Returns:
-        jax.Array: The imaginary part of normalized hp waveform.
+        tuple[jax.Array, jax.Array]: Tuple of log density distributions
+            in the form of (log_density_hp, log_density_hc)
+            at ((10, 10, 8), (10, 10, 8)) shape.
     """
-    # Get hp waveform with Ripple
-    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
-    # Calculate normalized waveform
-    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Compilation
+    with tqdm.tqdm(total=2, desc="Compiling") as pbar:
+        # Compile log_den_hp()
+        hp_result = log_den_hp(thetas)
+        pbar.update(1)
+        # Compile log_den_hc()
+        hc_result = log_den_hc(thetas)
+        pbar.update(1)
+        # Print
+        print(f"Functions compiled for theta entry at {thetas.shape} shape.")
     # Func return
-    return wf_norm.imag
-
-
-def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
-    """
-    Normalized hc waveform, hc.real.
-
-    Args:
-        theta (jax.Array): GW param
-            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
-        f_sig (jax.Array): Signal frequencies array.
-
-    Returns:
-        jax.Array: The real part of normalized hc waveform.
-    """
-    # Get hc waveform with Ripple
-    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
-    # Calculate normalized waveform
-    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
-    # Func return
-    return wf_norm.real
+    return hp_result, hc_result
 
 
 # Overall batch call
