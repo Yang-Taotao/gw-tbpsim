@@ -10,7 +10,7 @@ import jax.numpy as jnp
 from ripple.waveforms import IMRPhenomXAS
 
 # Import constants
-from src.gw_tbpsim.constant import F_SIG, F_REF, F_PSD, F_DIFF
+from .config import F_SIG, F_REF, F_PSD, F_DIFF
 
 # JAX settings
 jax.config.update("jax_enable_x64", True)
