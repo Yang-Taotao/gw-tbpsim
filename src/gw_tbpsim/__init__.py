@@ -427,6 +427,135 @@ def fim_hc(thetas: jax.Array) -> jax.Array:
     grads = grad_hc(thetas)
     # Return FIM result
     return fim_core(grads)
+
+
+# Gradiant Func
+# =========================================================================== #
+
+
+def grad_hp(theta: jax.Array) -> jax.Array:
+    """
+    Gradients of normalized hp against hp parameters.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+
+    Returns:
+        jax.Array: Mapped gradients
+            evaluated as d(hp) / d(thetas).
+    """
+    # Map gradiant result
+    grad_hp_real = jax.vmap(jax.grad(hp_real), in_axes=(None, 0))(theta, F_SIG)
+    grad_hp_imag = jax.vmap(jax.grad(hp_imag), in_axes=(None, 0))(theta, F_SIG)
+    # Func return - complex128 dtype necessary
+    return jnp.complex128(grad_hp_real + grad_hp_imag * 1j)
+
+
+def grad_hc(theta: jax.Array) -> jax.Array:
+    """
+    Gradients of normalized hp against hp parameters.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+
+    Returns:
+        jax.Array: Mapped gradients
+            evaluated as d(hp) / d(thetas).
+    """
+
+    # Map gradiant result
+    grad_hc_real = jax.vmap(jax.grad(hc_real), in_axes=(None, 0))(theta, F_SIG)
+    grad_hc_imag = jax.vmap(jax.grad(hc_imag), in_axes=(None, 0))(theta, F_SIG)
+    # Func return - complex128 dtype necessary
+    return jnp.complex128(grad_hc_real + grad_hc_imag * 1j)
+
+
+# Waveform Func
+# =========================================================================== #
+
+
+def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+    """
+    Normalized hp waveform, hp.real.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
+
+    Returns:
+        jax.Array: The real part of normalized hp waveform.
+    """
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.real
+
+
+def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+    """
+    Normalized hp waveform, hp.imag.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
+
+    Returns:
+        jax.Array: The imaginary part of normalized hp waveform.
+    """
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.imag
+
+
+def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+    """
+    Normalized hc waveform, hc.real.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
+
+    Returns:
+        jax.Array: The real part of normalized hc waveform.
+    """
+    # Get hc waveform with Ripple
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.real
+
+
+def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+    """
+    Normalized hc waveform, hc.imag.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
+
+    Returns:
+        jax.Array: The imaginary part of normalized hc waveform.
+    """
+    # Get hc waveform with Ripple
+    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.imag
+
+
 # =========================================================================== #
 # Figs
 
