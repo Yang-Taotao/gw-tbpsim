@@ -7,10 +7,12 @@ Core methods for gw_tbsim package.
 import os
 import jax
 import jax.numpy as jnp
+import tqdm
+import matplotlib.pyplot as plt
 from ripple.waveforms import IMRPhenomXAS
 
 # Import constants
-from .config import F_SIG, F_REF, F_PSD, F_DIFF
+from src.gw_tbpsim.constant import F_SIG, F_REF, F_PSD, F_DIFF
 
 # JAX settings
 jax.config.update("jax_enable_x64", True)
