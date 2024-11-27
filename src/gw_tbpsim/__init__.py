@@ -427,3 +427,42 @@ def fim_hc(thetas: jax.Array) -> jax.Array:
     grads = grad_hc(thetas)
     # Return FIM result
     return fim_core(grads)
+# =========================================================================== #
+# Figs
+
+
+def log_fim_contour(
+    data_x: jnp.ndarray,
+    data_y: jnp.ndarray,
+    data_z: jnp.ndarray,
+    waveform: str = "hp",
+):
+    """
+    Generate contourf plots for log density wrt mc, eta
+    Defaulted at waveform hp results
+    """
+    # Local plotter resources
+    xlabel, ylabel, cblabel = (
+        r"Chirp Mass $\mathcal{M} [M_\odot$]",
+        r"Symmetric Mass Ratio $\eta$",
+        r"$\log$ Template Bank Density",
+    )
+    mc_min, mc_max = jnp.min(data_x), jnp.max(data_x)
+    save_path = f"./figures/log_fim_contour_{waveform}_{mc_min}_{mc_max}.png"
+    # Plot init
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # Plotter
+    cs = ax.contourf(
+        data_x,
+        data_y,
+        data_z.T,
+        alpha=0.8,
+        levels=20,
+        cmap="gist_heat",
+    )
+    # Plot customization
+    ax.set(xlabel=xlabel, ylabel=ylabel)
+    cb = plt.colorbar(cs, ax=ax)
+    cb.ax.set_ylabel(cblabel)
+    # Plot admin
+    fig.savefig(save_path)
