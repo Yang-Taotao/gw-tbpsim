@@ -108,24 +108,61 @@ def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     return wf_norm.real
 
 
-def hc_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+# Overall batch call
+def log_density_batch(
+    thetas: jax.Array, mcs: jax.Array, etas: jax.Array
+) -> tuple[jax.Array, jax.Array]:
     """
-    Normalized hc waveform, hc.imag.
+    Batched opearation for log density calculation for both hp and hc waveform.
 
     Args:
-        theta (jax.Array): GW param
+        thetas (jax.Array): GW parameter of shape (8, )
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
-        f_sig (jax.Array): Signal frequencies array.
+        mcs (jax.Array): Chirp mass parameter array at (n, ) shape.
+        etas (jax.Array): Symmetric mass ratio parameter array at (n, ) shape.
 
     Returns:
-        jax.Array: The imaginary part of normalized hc waveform.
+        tuple[jax.Array, jax.Array]: Tuple of log density distributions
+            in the form of (log_density_hp, log_density_hc)
+            at ((n, n, 8), (n, n, 8)) shape.
     """
-    # Get hc waveform with Ripple
-    _, wf = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
-    # Calculate normalized waveform
-    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Local repo
+    theta_dim = mcs.shape[0]
+    batch_size = 10
+    # Get total number of batches
+    batch_num = (theta_dim + batch_size - 1) // batch_size
+
+    # Build theta parameters
+    theta = theta_gen(thetas, mcs, etas)
+    # Build log density results array
+    hp_result = jnp.empty((theta_dim, theta_dim))
+    hc_result = jnp.empty((theta_dim, theta_dim))
+
+    # Batching
+    with tqdm.tqdm(total=batch_num**2, desc="Generating Log Density") as pbar:
+        # Linear iteration over rows and columns
+        for i in range(batch_num):
+            for j in range(batch_num):
+                # Set min, max for i, j
+                i_min = i * batch_size
+                j_min = j * batch_size
+                i_max = min((i + 1) * batch_size, theta_dim)
+                j_max = min((j + 1) * batch_size, theta_dim)
+
+                # Slice theta into component theta_batch
+                theta_batch = theta[i_min:i_max, j_min:j_max]
+                # Get component log density result
+                log_den_hp_batch = log_den_hp(theta_batch)
+                log_den_hc_batch = log_den_hc(theta_batch)
+
+                # Assemble log density results
+                hp_result = hp_result.at[i_min:i_max, j_min:j_max].set(log_den_hp_batch)
+                hc_result = hc_result.at[i_min:i_max, j_min:j_max].set(log_den_hc_batch)
+                # Update pbar
+                pbar.update(1)
+
     # Func return
-    return wf_norm.imag
+    return hp_result, hc_result
 
 
 # =========================================================================== #
