@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from ripple.waveforms import IMRPhenomXAS
 
 # Import constants
-from src.gw_tbpsim.constant import F_SIG, F_REF, F_PSD, F_DIFF
+from .config import F_SIG, F_REF, F_PSD, F_DIFF
 
 # JAX settings
 jax.config.update("jax_enable_x64", True)
@@ -44,31 +44,48 @@ def inner_prod(array_a: jax.Array, array_b: jax.Array) -> jax.Array:
     return 4 * F_DIFF * integrand.sum(axis=-1)
 
 
-def theta_gen(thetas: jax.Array, mcs: jax.Array, etas: jax.Array) -> jax.Array:
+# Waveform Func
+# =========================================================================== #
+
+
+def hp_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
     """
-    GW parameter matrix builder.
+    Normalized hp waveform, hp.real.
 
     Args:
-        thetas (jax.Array): GW parameter of shape (8, )
+        theta (jax.Array): GW param
             as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
-        mcs (jax.Array): Chirp mass parameter array at (n, ) shape.
-        etas (jax.Array): Symmetric mass ratio parameter array at (n, ) shape.
+        f_sig (jax.Array): Signal frequencies array.
 
     Returns:
-        jax.Array: GW parameter matrix at (n, n, 8) shape.
+        jax.Array: The real part of normalized hp waveform.
     """
-    # Check for mcs, etas shape match
-    assert mcs.shape == etas.shape
-    theta_dim = mcs.shape[0]
-    # Build theta parameters
-    theta = jnp.tile(thetas, (theta_dim, theta_dim, 1)).astype(jnp.float64)
-    theta = theta.at[:, :, 0].set(mcs[:, jnp.newaxis])
-    theta = theta.at[:, :, 1].set(etas[jnp.newaxis, :])
-    # Return
-    return theta
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.real
 
 
-# =========================================================================== #
+def hp_imag(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
+    """
+    Normalized hp waveform, hp.imag.
+
+    Args:
+        theta (jax.Array): GW param
+            as [mc, eta, chi1, chi2, dist_mpc, tc, phic, inclination].
+        f_sig (jax.Array): Signal frequencies array.
+
+    Returns:
+        jax.Array: The imaginary part of normalized hp waveform.
+    """
+    # Get hp waveform with Ripple
+    wf, _ = IMRPhenomXAS.gen_IMRPhenomXAS_hphc(f_sig, theta, F_REF)
+    # Calculate normalized waveform
+    wf_norm = wf / jnp.sqrt(inner_prod(wf, wf))
+    # Func return
+    return wf_norm.imag
 
 
 def hc_real(theta: jax.Array, f_sig: jax.Array) -> jax.Array:
